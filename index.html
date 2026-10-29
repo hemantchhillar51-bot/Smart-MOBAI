@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SmartMobile AI – Find the Right Smartphone</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#f8fafc;--fg:#1e293b;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f172a;--fg:#f1f5f9;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0f172a;--fg:#f1f5f9;color-scheme:dark}
+html{scroll-behavior:smooth;scroll-padding-top:calc(env(safe-area-inset-top,0px) + 70px)}
+body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--fg)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:60;background:var(--bg)}
+.hidden{display:none!important}
+body{background-image:radial-gradient(rgba(14,165,233,.14) 1px,transparent 1px);background-size:22px 22px}
+.blob{position:absolute;border-radius:50%;filter:blur(70px);opacity:.45;animation:drift 14s ease-in-out infinite alternate;pointer-events:none}
+@keyframes drift{to{transform:translate(40px,30px) scale(1.15)}}
+.gtext{background:linear-gradient(90deg,#0ea5e9,#6366f1,#ec4899,#0ea5e9);background-size:200% auto;-webkit-background-clip:text;background-clip:text;color:transparent;animation:shine 6s linear infinite}
+@keyframes shine{to{background-position:200% center}}
+.float{display:inline-block;animation:bob 3.2s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-7px)}}
+.lift{transition:transform .2s,box-shadow .2s}.lift:hover{box-shadow:0 16px 36px -10px rgba(99,102,241,.5)}
+.reveal{animation:rise .5s both}@keyframes rise{from{opacity:0;transform:translateY(16px)}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important}}
+</style>
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<script>tailwind.config={darkMode:'class'}</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body class="min-h-screen">
+<header class="sticky top-[env(safe-area-inset-top,0px)] z-50 bg-white/85 dark:bg-slate-900/85 backdrop-blur border-b border-slate-200 dark:border-slate-800">
+ <div class="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between gap-3">
+  <a href="#top" class="font-extrabold text-lg bg-gradient-to-r from-sky-600 to-indigo-600 bg-clip-text text-transparent">📱 SmartMobile AI</a>
+  <nav class="hidden sm:flex gap-5 text-sm font-semibold">
+   <a href="#personas" class="hover:text-sky-600">Who it's for</a><a href="#phones" class="hover:text-sky-600">Phones</a><a href="#compare" class="hover:text-sky-600">Compare</a><a href="#dashboard" class="hover:text-sky-600">Dashboard</a></nav>
+  <button id="themeBtn" onclick="theme()" class="w-9 h-9 rounded-lg border border-slate-300 dark:border-slate-700" aria-label="Toggle theme">🌙</button>
+ </div>
+</header>
+
+<section id="top" class="relative overflow-hidden px-4 pt-12 pb-8">
+ <div class="blob bg-sky-400 w-72 h-72 -top-16 -left-16"></div><div class="blob bg-fuchsia-400 w-72 h-72 top-10 right-0" style="animation-delay:-5s"></div><div class="blob bg-indigo-500 w-60 h-60 bottom-0 left-1/3" style="animation-delay:-9s"></div>
+ <span class="float absolute text-3xl left-[6%] top-[22%] pointer-events-none">📷</span><span class="float absolute text-3xl right-[8%] top-[18%] pointer-events-none" style="animation-delay:-1s">🎮</span><span class="float absolute text-3xl left-[12%] bottom-[14%] pointer-events-none" style="animation-delay:-2s">🔋</span><span class="float absolute text-3xl right-[12%] bottom-[16%] pointer-events-none" style="animation-delay:-.5s">✨</span>
+ <div class="relative z-10 max-w-3xl mx-auto text-center space-y-4">
+  <span class="inline-block text-xs font-semibold px-3 py-1 rounded-full bg-white/70 dark:bg-slate-800/70 border border-sky-300 dark:border-sky-700 backdrop-blur">🤖 AI-powered phone picker</span>
+  <h1 class="text-4xl sm:text-6xl font-black leading-tight">Find the <span class="gtext">perfect smartphone</span> for you</h1>
+  <p class="text-sm sm:text-base text-slate-600 dark:text-slate-300">Search in plain English, pick who you are, then compare side by side.</p>
+  <div class="flex items-center gap-2 bg-white dark:bg-slate-800 rounded-xl p-2 shadow-lg border border-sky-300 dark:border-sky-700">
+   <input id="q" type="search" autocomplete="off" placeholder="e.g. best camera phone under 30k, samsung 5g, gaming under 25000" class="flex-1 min-w-0 bg-transparent outline-none px-2 py-1.5 text-sm sm:text-base" oninput="debounce()" onkeydown="if(event.key==='Enter')go()">
+   <button onclick="voice()" title="Voice search" class="p-2">🎤</button>
+   <button onclick="go()" class="bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 rounded-lg text-sm font-semibold">Search</button>
+  </div>
+  <div id="chips" class="flex flex-wrap justify-center gap-2 text-xs"></div>
+ </div>
+</section>
+
+<section id="personas" class="max-w-6xl mx-auto px-4 py-6">
+ <h2 class="text-2xl font-bold">Who are you?</h2>
+ <p class="text-sm text-slate-500 dark:text-slate-400 mb-4">Pick a profile and every phone is re-ranked by how well it fits that person.</p>
+ <div id="pCards" class="grid grid-cols-2 lg:grid-cols-5 gap-3"></div>
+ <div id="pInfo" class="hidden mt-4 p-4 rounded-xl bg-sky-50 dark:bg-sky-950/40 border border-sky-100 dark:border-sky-900 text-sm"></div>
+</section>
+
+<main id="phones" class="max-w-6xl mx-auto px-4 py-6">
+ <div class="flex flex-wrap gap-3 items-end justify-between bg-white dark:bg-slate-800/60 p-4 rounded-xl border border-slate-200 dark:border-slate-700 mb-5">
+  <div class="flex flex-wrap gap-3 text-xs font-semibold text-slate-500 dark:text-slate-400">
+   <label>Budget<select id="fb" onchange="draw()" class="block mt-1 rounded-lg px-3 py-2 bg-slate-100 dark:bg-slate-700 text-inherit text-sm"><option value="1e9">Any</option><option value="15000">Up to ₹15,000</option><option value="25000">Up to ₹25,000</option><option value="40000">Up to ₹40,000</option><option value="70000">Up to ₹70,000</option><option value="150000">Up to ₹1,50,000</option></select></label>
+   <label>Type<select id="fu" onchange="draw()" class="block mt-1 rounded-lg px-3 py-2 bg-slate-100 dark:bg-slate-700 text-inherit text-sm"><option value="all">All</option><option value="camera">Camera</option><option value="gaming">Gaming</option><option value="battery">Battery</option><option value="flagship">Flagship</option></select></label>
+   <label>Brand<select id="fr" onchange="draw()" class="block mt-1 rounded-lg px-3 py-2 bg-slate-100 dark:bg-slate-700 text-inherit text-sm"></select></label>
+   <label>Sort<select id="fs" onchange="draw()" class="block mt-1 rounded-lg px-3 py-2 bg-slate-100 dark:bg-slate-700 text-inherit text-sm"><option value="match">Best match</option><option value="pa">Price: low to high</option><option value="pd">Price: high to low</option><option value="rt">Top rated</option><option value="vl">Best value</option></select></label>
+  </div>
+  <div class="flex items-center gap-3"><button onclick="reset()" class="text-xs underline text-slate-500">Reset all</button><span id="count" class="text-xs font-semibold px-2.5 py-1 rounded-md bg-sky-100 dark:bg-sky-950 text-sky-700 dark:text-sky-300"></span></div>
+ </div>
+ <div id="grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"></div>
+</main>
+
+<section id="compare" class="max-w-6xl mx-auto px-4 py-8">
+ <h2 class="text-2xl font-bold">⚖️ Compare dashboard</h2>
+ <p id="cmpHint" class="text-sm text-slate-500 dark:text-slate-400 mb-4"></p>
+ <div id="cmpBody" class="hidden space-y-4">
+  <div id="cmpWin" class="grid grid-cols-2 lg:grid-cols-3 gap-3"></div>
+  <div class="grid lg:grid-cols-5 gap-4">
+   <div class="lg:col-span-2 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4"><div class="h-72"><canvas id="cmpChart"></canvas></div></div>
+   <div class="lg:col-span-3 overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"><table id="cmpTable" class="min-w-full text-sm"></table></div>
+  </div>
+ </div>
+</section>
+
+<section id="dashboard" class="max-w-6xl mx-auto px-4 py-8">
+ <h2 class="text-2xl font-bold">📊 Market dashboard</h2>
+ <p class="text-sm text-slate-500 dark:text-slate-400 mb-4">A snapshot of every phone in the catalogue.</p>
+ <div id="kpis" class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4"></div>
+ <div class="grid lg:grid-cols-3 gap-4">
+  <div class="lg:col-span-2 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4"><h3 class="text-sm font-semibold mb-2">Average score by brand (out of 100)</h3><div class="h-64"><canvas id="d1"></canvas></div></div>
+  <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4"><h3 class="text-sm font-semibold mb-2">Phones by type</h3><div class="h-64"><canvas id="d2"></canvas></div></div>
+ </div>
+ <h3 class="text-lg font-bold mt-6 mb-2">Best pick for each profile</h3>
+ <div id="picks" class="grid sm:grid-cols-2 lg:grid-cols-5 gap-3"></div>
+</section>
+
+<footer class="border-t border-slate-200 dark:border-slate-800 text-center text-xs text-slate-500 py-6 px-4 pb-24">Prices and specs are indicative; scores for most phones are our estimates, not customer reviews. Verify in store before buying. © 2026 SmartMobile AI</footer>
+
+<div id="tray" class="hidden fixed bottom-0 inset-x-0 z-50 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700 px-4 pt-3" style="padding-bottom:calc(env(safe-area-inset-bottom,0px) + 12px)">
+ <div class="max-w-6xl mx-auto flex items-center justify-between gap-3 text-sm"><span id="trayTxt" class="truncate font-medium"></span><div class="flex gap-2 shrink-0"><button onclick="sel.clear();draw()" class="px-3 py-2 text-xs underline">Clear</button><button onclick="goCmp()" class="bg-sky-600 text-white px-4 py-2 rounded-lg text-xs font-bold">Compare now</button></div></div>
+</div>
+<div id="toast" class="hidden fixed bottom-20 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-white text-sm px-4 py-2 rounded-lg shadow-lg"></div>
+
+<script>
+/* ---- DATA: [name,brand,price,type,chip,display,battery,camera,[perf,camera,battery,display,value],why] ---- */
+const CORE=[
+["iQOO Z9s Pro 5G","iQOO",24999,"gaming","Snapdragon 7 Gen 3",'6.78" curved AMOLED 120Hz',"5500 mAh (80W)","50MP OIS + 8MP",[90,78,92,88,91],"Best under ₹25,000 for gamers: Snapdragon 7 Gen 3, 80W charging and a curved 120Hz display."],
+["Samsung Galaxy A35 5G","Samsung",27999,"camera","Exynos 1380",'6.6" Super AMOLED 120Hz',"5000 mAh (25W)","50MP OIS + 8MP + 5MP",[75,89,82,90,80],"IP67 water resistance, natural photos and 4 years of OS updates."],
+["Realme Narzo 70 Turbo","Realme",14999,"battery","Dimensity 7300",'6.67" OLED 120Hz',"5000 mAh (45W)","50MP AI dual",[82,70,88,85,95],"Very powerful under ₹15,000; heavy games like BGMI run smoothly."],
+["OnePlus Nord CE 4 Lite","OnePlus",19999,"battery","Snapdragon 695 5G",'6.67" AMOLED 120Hz',"5500 mAh (80W)","50MP Sony OIS",[72,80,94,87,83],"Bright AMOLED and 80W charging for streaming and all-day use."],
+["iPhone 15 (128GB)","Apple",65999,"flagship","A16 Bionic",'6.1" Super Retina XDR',"3349 mAh (USB-C)","48MP + 12MP",[98,95,80,91,78],"Premium video, reels and a phone that lasts for years."],
+["Xiaomi 14 Civi","Xiaomi",39999,"camera","Snapdragon 8s Gen 3",'6.55" 1.5K AMOLED',"4700 mAh (67W)","50MP Leica triple + dual selfie",[94,93,78,94,88],"Leica colours and a dual selfie camera suit portraits and vloggers."],
+["Motorola Moto G45 5G","Motorola",12269,"battery","Snapdragon 6s Gen 3",'6.5" 120Hz LCD',"5000 mAh","50MP + 2MP",[62,60,78,68,88],"5G and a 120Hz screen at the lowest budget."],
+["OnePlus N6 5G","OnePlus",19999,"battery","Dimensity 6360 Apex",'120Hz LCD',"8000 mAh","—",[70,68,97,72,90],"Huge 8000 mAh battery; a top pick under ₹20,000."],
+["Motorola Moto G96 5G","Motorola",19320,"camera","Snapdragon 7s Gen 2",'6.67" pOLED 144Hz',"5500 mAh","50MP Sony LYTIA + 8MP",[76,86,82,88,88],"Strong camera and 144Hz pOLED under ₹25,000."],
+["Realme P4 5G","Realme",20519,"gaming","Snapdragon 7 Gen 4",'6.77" AMOLED 144Hz',"7000 mAh","50MP",[84,74,92,88,86],"Gaming power and a 7000 mAh battery around ₹21,000."],
+["Poco X7 Pro 5G","Poco",23999,"gaming","Dimensity 8400 Ultra",'6.67" AMOLED 120Hz',"6550 mAh","50MP Sony OIS + 8MP",[90,76,90,88,92],"Very fast processor and big battery under ₹25,000."],
+["Vivo T4 Pro 5G","Vivo",29999,"camera","Snapdragon 7 Gen 4",'6.77" AMOLED 120Hz',"6500 mAh","50MP Sony + 50MP telephoto",[82,86,90,88,85],"Telephoto camera plus a big battery at this price."],
+["OPPO Reno16 5G","OPPO",61999,"camera","Snapdragon 7 Gen 4",'6.32" AMOLED',"6700 mAh","50MP triple, 50MP selfie",[78,88,92,86,70],"Four 50MP cameras: great for selfies and portraits."],
+["Apple iPhone 17","Apple",77900,"flagship","Apple A19",'6.3" OLED',"—","48MP + 48MP",[97,92,84,92,74],"The iPhone to buy if you don't want to pay Pro prices."],
+["Xiaomi 17","Xiaomi",89999,"flagship","Snapdragon 8 Elite Gen 5",'6.3" AMOLED',"6330 mAh","50MP triple",[97,92,90,94,78],"Top processor and big battery in a compact body."],
+["vivo X300 Pro","Vivo",109999,"camera","Dimensity 9500",'6.78" AMOLED',"6510 mAh","50MP + 50MP + 200MP",[96,95,90,94,76],"200MP telephoto for photography lovers."],
+["Samsung Galaxy S26 Ultra","Samsung",117999,"flagship","Snapdragon 8 Elite Gen 5",'6.9" AMOLED',"5000 mAh","200MP + 10MP + 50MP + 50MP",[98,96,78,96,74],"S Pen and every Samsung feature in one phone."],
+["Xiaomi 17 Ultra","Xiaomi",139999,"camera","Snapdragon 8 Elite Gen 5",'AMOLED',"—","200MP periscope",[98,98,82,96,70],"200MP periscope camera among the best for photography."],
+["Apple iPhone 17 Pro Max","Apple",147900,"flagship","Apple A19 Pro",'6.9" OLED',"—","48MP triple",[99,96,90,96,68],"Biggest, most powerful iPhone for video and long-term use."],
+["vivo X300 Ultra","Vivo",159999,"camera","Snapdragon 8 Elite Gen 5",'6.82" AMOLED',"6600 mAh","200MP + 200MP + 50MP",[98,98,88,96,66],"Two 200MP cameras for pro-grade photos."],
+["OPPO Find X9 Ultra","OPPO",169999,"camera","Snapdragon 8 Elite Gen 5",'6.82" AMOLED',"7050 mAh","200MP + 50MP + 200MP + 50MP",[98,98,92,96,64],"Top camera phone with a huge 7050 mAh battery."]];
+/* >>> PASTE your existing EXTRA=[...] array here (same row format: name,brand,price,type,chip,display,battery,camera,[5 scores]) <<< */
+const EXTRA=[];
+const WHY={gaming:"Fast processor and smooth screen for gaming.",camera:"Balanced camera phone for photos and video.",battery:"Dependable all-day battery for daily use.",flagship:"Top performance and premium features."};
+const P=[];
+const mk=(r,id)=>{const s=r[8],o=s.reduce((a,b)=>a+b,0)/5;P.push({id,name:r[0],brand:r[1],price:r[2],use:r[3],chip:r[4],disp:r[5],bat:r[6],cam:r[7],s,why:r[9]||WHY[r[3]],ov:Math.round(o),rating:+(o/20).toFixed(1)})};
+CORE.forEach((r,i)=>mk(r,'p'+i));EXTRA.forEach((r,i)=>mk(r,'x'+i));
+
+/* ---- PERSONAS: weights = [performance,camera,battery,display,value] ---- */
+const PER={
+student:{ico:'🎓',name:'Student',w:[.2,.15,.25,.1,.3],tip:'Value and battery matter most: all-day charge for lectures, a decent chip for apps and light gaming, and a price that fits a student budget.',max:30000},
+creator:{ico:'🎬',name:'Creator',w:[.2,.4,.1,.25,.05],tip:'Camera quality, stabilisation (OIS) and a colour-accurate AMOLED screen come first, backed by a fast chip for editing.',max:1e9},
+gamer:{ico:'🎮',name:'Gamer',w:[.5,.05,.2,.2,.05],tip:'Look for a flagship-class chip, 120Hz or higher refresh rate, a big battery and fast charging.',max:1e9},
+business:{ico:'💼',name:'Business professional',w:[.2,.15,.3,.15,.2],tip:'Battery for long days, reliable performance, a sharp screen for email and documents, and good software update support.',max:1e9},
+senior:{ico:'👵',name:'Senior',w:[.05,.1,.35,.3,.2],tip:'Big, bright, easy-to-read screen, long battery life and good value. Simplicity and reliability beat raw speed.',max:40000}};
+const fit=(p,k)=>Math.round(PER[k].w.reduce((a,w,i)=>a+w*p.s[i],0));
+
+/* ---- helpers ---- */
+const $=id=>document.getElementById(id),inr=n=>'₹'+n.toLocaleString('en-IN');
+let S={persona:null},sel=new Set(),PG=24,cur=[],ch={},timer;
+function toast(m){const e=$('toast');e.textContent=m;e.classList.remove('hidden');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.add('hidden'),2200)}
+function theme(){const d=document.documentElement,dk=!(d.dataset.theme?d.dataset.theme==='dark':matchMedia('(prefers-color-scheme:dark)').matches);d.dataset.theme=dk?'dark':'light';d.classList.toggle('dark',dk);$('themeBtn').textContent=dk?'☀️':'🌙';dash();cmp()}
+(()=>{const dk=matchMedia('(prefers-color-scheme:dark)').matches;document.documentElement.classList.toggle('dark',dk);$('themeBtn').textContent=dk?'☀️':'🌙'})();
+function hue(b){return[...b].reduce((a,c)=>a+c.charCodeAt(0)*7,0)%360}
+function img(p){const h=hue(p.brand);return`<svg viewBox="0 0 120 210" class="h-full" role="img" aria-label="${p.name}"><defs><linearGradient id="g${p.id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="hsl(${h},70%,60%)"/><stop offset="1" stop-color="hsl(${h},55%,22%)"/></linearGradient></defs><ellipse cx="60" cy="204" rx="36" ry="4" fill="#000" fill-opacity=".25"/><rect x="18" y="6" width="84" height="196" rx="18" fill="#0b1220" stroke="#64748b"/><rect x="21" y="9" width="78" height="190" rx="15" fill="url(#g${p.id})"/><rect x="28" y="15" width="27" height="50" rx="13" fill="#000" fill-opacity=".35"/><circle cx="41" cy="29" r="7" fill="#0b0f19" stroke="#cbd5e1"/><circle cx="41" cy="49" r="7" fill="#0b0f19" stroke="#cbd5e1"/><text x="60" y="172" text-anchor="middle" font-size="11" font-weight="700" fill="#fff">${p.brand}</text></svg>`}
+
+/* ---- SEARCH ---- */
+const STOP=new Set('best top good great new latest phone phones mobile mobiles smartphone smartphones under below within upto up to in for with me a an the and of rs inr at around near less than max maximum budget price cheap cheaper want need looking find show get i my is are 5g 4g'.split(' '));
+const INTENT={camera:/^(camera|cameras|photo|photos|photography|selfie|selfies|portrait|vlog|vlogging|video)$/,gaming:/^(gaming|game|games|gamer|bgmi|pubg|cod|fps)$/,battery:/^(battery|charging|backup|longlasting)$/,flagship:/^(flagship|premium|luxury|ultra|pro)$/};
+const PWORD={student:/^(student|students|college|school|study)$/,creator:/^(creator|creators|youtuber|influencer|editing|content)$/,gamer:/^(gamer|gamers)$/,business:/^(business|office|work|professional|executive|corporate)$/,senior:/^(senior|seniors|elderly|parents|parent|father|mother|grandparents|old|simple)$/};
+function parse(raw){
+ let q=' '+raw.toLowerCase().replace(/[₹,]/g,'').replace(/\bunder\b|\bbelow\b|\bwithin\b|\bupto\b|\bup to\b/g,' ')+' ',budget=Infinity;
+ q=q.replace(/(^|\s)(\d+(?:\.\d+)?)\s*(k|lakh|lac|l|thousand)?(?=\s)/g,(m,a,n,u)=>{let v=parseFloat(n);if(u)v*=/^(k|thousand)$/.test(u)?1000:100000;if(v>=3000||(u&&v>=3000)){budget=Math.min(budget,v*1.02);return' '}return m});
+ const o={budget,toks:[],intent:null,persona:null,brandHit:null};
+ q.split(/[\s\-_/+]+/).filter(Boolean).forEach(t=>{
+  let hit=false;for(const k in INTENT)if(INTENT[k].test(t)){o.intent=k;hit=true}
+  for(const k in PWORD)if(PWORD[k].test(t)){o.persona=k;hit=true}
+  if(!hit&&!STOP.has(t)&&t.length>1)o.toks.push(t)});
+ return o}
+const hay=p=>(p.name+' '+p.brand+' '+p.chip+' '+p.use).toLowerCase();
+function compute(){
+ const raw=$('q').value.trim(),o=raw?parse(raw):{budget:Infinity,toks:[]},note=[];
+ let l=P.slice();
+ const fb=+$('fb').value,fu=$('fu').value,fr=$('fr').value;
+ const bud=Math.min(o.budget,fb);if(bud<Infinity)l=l.filter(p=>p.price<=bud);
+ if(fu!=='all')l=l.filter(p=>p.use===fu);if(fr!=='all')l=l.filter(p=>p.brand===fr);
+ const persona=o.persona||S.persona;
+ let toks=o.toks,relaxed=false;
+ if(toks.length){const m=l.filter(p=>{const h=hay(p),hc=h.replace(/\s/g,'');return toks.every(t=>h.includes(t)||hc.includes(t))});
+  if(m.length)l=m;else{const m2=l.filter(p=>{const h=hay(p).replace(/\s/g,'');return toks.some(t=>h.includes(t))});l=m2;relaxed=true}}
+ const idx={gaming:0,camera:1,battery:2,flagship:0},it=o.intent;
+ if(it&&!toks.length&&!fu!=='all')l.sort((a,b)=>b.s[idx[it]]-a.s[idx[it]]);
+ const so=$('fs').value;
+ if(so==='pa')l.sort((a,b)=>a.price-b.price);else if(so==='pd')l.sort((a,b)=>b.price-a.price);else if(so==='rt')l.sort((a,b)=>b.rating-a.rating);else if(so==='vl')l.sort((a,b)=>b.s[4]-a.s[4]);
+ else if(persona)l.sort((a,b)=>fit(b,persona)-fit(a,persona));
+ else if(it)l.sort((a,b)=>b.s[idx[it]]-a.s[idx[it]]||b.rating-a.rating);
+ else l.sort((a,b)=>b.rating-a.rating);
+ if(it&&(it==='camera'||it==='gaming'||it==='battery')&&fu==='all'&&!toks.length&&raw)l=l.filter(p=>p.s[idx[it]]>=80||p.use===it);
+ if(bud<Infinity)note.push('Budget ≤ '+inr(Math.round(bud/1.02===bud?bud:(o.budget<Infinity?o.budget/1.02:bud))));
+ if(it)note.push('Focus: '+it);if(persona)note.push('Profile: '+PER[persona].name);
+ if(toks.length)note.push('Matching: '+toks.join(' '));
+ return{l,note,persona,relaxed,raw}}
+function draw(keep){
+ if(!keep)PG=24;const r=compute();cur=r.l;
+ $('chips').innerHTML=r.note.map(n=>`<span class="px-2.5 py-1 rounded-full bg-sky-100 dark:bg-sky-950 text-sky-700 dark:text-sky-300">${n}</span>`).join('')+(r.raw?`<button onclick="reset()" class="px-2.5 py-1 rounded-full border border-slate-300 dark:border-slate-600">✕ clear</button>`:'');
+ $('count').textContent=cur.length+' phones';
+ const g=$('grid');
+ if(!cur.length){g.innerHTML=`<div class="col-span-full text-center py-12 text-slate-500">No phones match. Try a higher budget or fewer words, e.g. "camera phone under 40k".<br><button class="underline text-sky-600 mt-2" onclick="reset()">Reset filters</button></div>`}
+ else g.innerHTML=(r.relaxed?`<div class="col-span-full text-sm text-amber-600">No exact match for “${r.raw}”, showing close results.</div>`:'')+cur.slice(0,PG).map(p=>{const q=encodeURIComponent(p.name),f=r.persona?fit(p,r.persona):null;return`
+ <article class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 overflow-hidden flex flex-col shadow-sm lift reveal">
+  <div class="relative h-44 py-3 flex justify-center bg-gradient-to-br from-sky-100 to-indigo-200 dark:from-slate-700 dark:to-indigo-950">${img(p)}
+   <span class="absolute top-3 left-3 bg-slate-900/80 text-white text-[10px] font-bold px-2.5 py-1 rounded-full uppercase">${p.use}</span>
+   <span class="absolute top-3 right-3 bg-amber-500 text-white text-xs font-bold px-2 py-0.5 rounded-md">⭐ ${p.rating}</span>
+   ${f!==null?`<span class="absolute bottom-3 right-3 bg-emerald-600 text-white text-xs font-bold px-2 py-0.5 rounded-md">${PER[r.persona].ico} ${f}% fit</span>`:''}</div>
+  <div class="p-4 space-y-2 flex-grow">
+   <div class="flex justify-between gap-2"><div><h3 class="font-bold leading-tight">${p.name}</h3><p class="text-xs text-slate-500 dark:text-slate-400">${p.chip}</p></div><div class="font-extrabold text-sky-600 dark:text-sky-400 whitespace-nowrap">${inr(p.price)}</div></div>
+   <p class="text-xs bg-sky-50 dark:bg-sky-950/40 rounded-lg p-2.5">✨ ${p.why}</p>
+   <ul class="text-xs text-slate-600 dark:text-slate-300 space-y-0.5"><li>📱 ${p.disp}</li><li>🔋 ${p.bat}</li><li>📷 ${p.cam}</li></ul></div>
+  <div class="p-4 pt-0 space-y-2">
+   <label class="flex items-center gap-2 text-xs cursor-pointer"><input type="checkbox" ${sel.has(p.id)?'checked':''} onchange="tog('${p.id}',this)"> Add to comparison</label>
+   <div class="grid grid-cols-2 gap-2"><a href="https://www.amazon.in/s?k=${q}" target="_blank" rel="noopener" class="bg-amber-500 text-white text-center py-2 rounded-lg text-xs font-bold">Amazon</a><a href="https://www.flipkart.com/search?q=${q}" target="_blank" rel="noopener" class="bg-blue-600 text-white text-center py-2 rounded-lg text-xs font-bold">Flipkart</a></div></div>
+ </article>`}).join('')+(cur.length>PG?`<div class="col-span-full text-center"><button onclick="PG+=24;draw(1)" class="bg-sky-600 text-white px-6 py-2 rounded-lg text-sm font-semibold">Show more (${cur.length-PG})</button></div>`:'');
+ tray();cmp()}
+function debounce(){clearTimeout(timer);timer=setTimeout(draw,250)}
+function go(){draw();$('phones').scrollIntoView({behavior:'smooth'})}
+function reset(){$('q').value='';['fb','fu','fr','fs'].forEach(i=>$(i).selectedIndex=0);S.persona=null;pCards();draw()}
+function voice(){const R=window.SpeechRecognition||window.webkitSpeechRecognition;if(!R)return toast('Voice search is not supported in this browser');try{const r=new R();r.lang='en-IN';r.onresult=e=>{$('q').value=e.results[0][0].transcript;go()};r.onerror=()=>toast('Microphone access denied');r.start();toast('Listening…')}catch(e){toast('Could not start voice search')}}
+
+/* ---- PERSONAS UI ---- */
+function pCards(){
+ $('pCards').innerHTML=Object.entries(PER).map(([k,v])=>`<button onclick="setP('${k}')" class="lift text-left p-4 rounded-2xl border ${S.persona===k?'border-sky-500 bg-sky-50 dark:bg-sky-950/40 ring-2 ring-sky-400':'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800'}"><div class="text-4xl float">${v.ico}</div><div class="font-bold mt-1 text-sm">${v.name}</div><div class="text-xs text-slate-500 dark:text-slate-400">Top: ${P.slice().sort((a,b)=>fit(b,k)-fit(a,k))[0].name}</div></button>`).join('');
+ const i=$('pInfo');if(S.persona){const v=PER[S.persona];i.classList.remove('hidden');i.innerHTML=`<b>${v.ico} ${v.name}:</b> ${v.tip} <button onclick="setP(null)" class="underline ml-1">Clear</button>`}else i.classList.add('hidden')}
+function setP(k){S.persona=S.persona===k?null:k;$('fs').value='match';if(k&&S.persona){const m=PER[k].max;if(m<1e9&&+$('fb').value>m)$('fb').value=String(m)}pCards();draw();if(S.persona)$('phones').scrollIntoView({behavior:'smooth'})}
+
+/* ---- COMPARE ---- */
+const MET=['Performance','Camera','Battery','Display','Value'];
+function tog(id,el){if(!sel.has(id)&&sel.size>=4){el.checked=false;return toast('You can compare up to 4 phones')}sel.has(id)?sel.delete(id):sel.add(id);tray();cmp()}
+function tray(){const n=sel.size;$('tray').classList.toggle('hidden',!n);$('trayTxt').textContent=n+' selected: '+P.filter(p=>sel.has(p.id)).map(p=>p.name).join(', ')}
+function goCmp(){$('compare').scrollIntoView({behavior:'smooth'})}
+function cmp(){
+ const l=P.filter(p=>sel.has(p.id));
+ $('cmpBody').classList.toggle('hidden',l.length<2);
+ $('cmpHint').textContent=l.length<2?'Tick “Add to comparison” on 2–4 phones to see them side by side.':`Comparing ${l.length} phones. Green marks the best in each row.`;
+ if(ch.c){ch.c.destroy();ch.c=null}if(l.length<2)return;
+ const win=[...MET.map((m,i)=>['🏆 Best '+m.toLowerCase(),l.reduce((a,b)=>b.s[i]>a.s[i]?b:a).name]),['🏷️ Lowest price',(x=>x.name+' ('+inr(x.price)+')')(l.reduce((a,b)=>b.price<a.price?b:a))]];
+ $('cmpWin').innerHTML=win.map(w=>`<div class="p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"><div class="text-xs text-slate-500 dark:text-slate-400">${w[0]}</div><div class="font-bold text-sm mt-0.5">${w[1]}</div></div>`).join('');
+ const rows=[['Price',p=>p.price,p=>inr(p.price),-1],['Rating',p=>p.rating,p=>'⭐ '+p.rating,1],['Processor',0,p=>p.chip],['Display',0,p=>p.disp],['Battery',0,p=>p.bat],['Camera',0,p=>p.cam],...MET.map((m,i)=>[m+' score',p=>p.s[i],p=>p.s[i],1])];
+ $('cmpTable').innerHTML='<thead><tr><th class="p-3"></th>'+l.map(p=>`<th class="p-3 text-left min-w-[130px]">${p.name}</th>`).join('')+'</tr></thead><tbody>'+rows.map(([lab,v,f,d])=>{const b=v?(d<0?Math.min(...l.map(v)):Math.max(...l.map(v))):null;return`<tr class="border-t border-slate-200 dark:border-slate-700"><td class="p-3 font-semibold text-slate-500 dark:text-slate-400">${lab}</td>`+l.map(p=>`<td class="p-3 ${v&&v(p)===b?'bg-emerald-100 dark:bg-emerald-900/40 font-bold':''}">${f(p)}</td>`).join('')+'</tr>'}).join('')+'</tbody>';
+ const cols=['#0ea5e9','#f59e0b','#10b981','#ef4444'];
+ ch.c=new Chart($('cmpChart'),{type:'radar',data:{labels:MET,datasets:l.map((p,i)=>({label:p.name,data:p.s,borderColor:cols[i],backgroundColor:cols[i]+'22'}))},options:{responsive:true,maintainAspectRatio:false,scales:{r:{min:40,max:100,ticks:{display:false}}}}})}
+
+/* ---- DASHBOARD ---- */
+function dash(){
+ Chart.defaults.color=document.documentElement.classList.contains('dark')?'#94a3b8':'#475569';
+ ['d1','d2'].forEach(k=>{if(ch[k])ch[k].destroy()});
+ const avg=Math.round(P.reduce((a,p)=>a+p.price,0)/P.length),top=P.slice().sort((a,b)=>b.rating-a.rating)[0],val=P.slice().sort((a,b)=>b.s[4]-a.s[4])[0],bl=[...new Set(P.map(p=>p.brand))];
+ const kp=(i,l,v)=>`<div class="p-4 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"><div class="text-2xl">${i}</div><div class="text-xs text-slate-500 dark:text-slate-400">${l}</div><div class="font-extrabold leading-tight">${v}</div></div>`;
+ $('kpis').innerHTML=kp('📱','Phones',P.length)+kp('💵','Average price',inr(avg))+kp('⭐','Top rated',top.name)+kp('💰','Best value',val.name);
+ const bs=bl.map(b=>{const x=P.filter(p=>p.brand===b);return[b,Math.round(x.reduce((a,p)=>a+p.ov,0)/x.length)]}).sort((a,b)=>b[1]-a[1]).slice(0,12);
+ ch.d1=new Chart($('d1'),{type:'bar',data:{labels:bs.map(x=>x[0]),datasets:[{data:bs.map(x=>x[1]),backgroundColor:bs.map(x=>`hsl(${hue(x[0])},65%,50%)`)}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{min:50,max:100}}}});
+ const ty=['gaming','camera','battery','flagship'];
+ ch.d2=new Chart($('d2'),{type:'doughnut',data:{labels:ty,datasets:[{data:ty.map(t=>P.filter(p=>p.use===t).length),backgroundColor:['#6366f1','#0ea5e9','#10b981','#f59e0b']}]},options:{responsive:true,maintainAspectRatio:false}});
+ $('picks').innerHTML=Object.entries(PER).map(([k,v])=>{const p=P.filter(x=>x.price<=v.max).sort((a,b)=>fit(b,k)-fit(a,k))[0];return`<button onclick="setP('${k}')" class="text-left p-4 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-sky-400"><div class="text-xs text-slate-500 dark:text-slate-400">${v.ico} ${v.name}</div><div class="font-bold text-sm mt-1">${p.name}</div><div class="text-sky-600 dark:text-sky-400 font-bold text-sm">${inr(p.price)} · ${fit(p,k)}% fit</div></button>`}).join('')}
+
+/* ---- INIT ---- */
+$('fr').innerHTML='<option value="all">All brands</option>'+[...new Set(P.map(p=>p.brand))].sort().map(b=>`<option value="${b}">${b} (${P.filter(p=>p.brand===b).length})</option>`).join('');
+pCards();dash();draw();
+$('grid').addEventListener('pointermove',e=>{const c=e.target.closest('article');if(!c||e.pointerType!=='mouse')return;const r=c.getBoundingClientRect(),x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;c.style.transform=`perspective(700px) rotateY(${x*6}deg) rotateX(${-y*6}deg) translateY(-4px)`});
+$('grid').addEventListener('pointerout',e=>{const c=e.target.closest('article');if(c&&!c.contains(e.relatedTarget))c.style.transform=''});
+</script>
+</body>
+</html>
